@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Room Widget</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap');
+
+        :root {
+            --bg-color: #FDFBF7;
+            /* Warm Cream */
+            --text-color: #2D2D2D;
+            --amber-color: #D97706;
+            /* Warm Amber */
+            --sage-color: #059669;
+            /* Sage Green */
+            --gray-color: #E5E7EB;
+            --surface-color: #FFFFFF;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'DM Sans', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            overflow-y: auto;
+            /* Allow scrolling if needed */
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'Instrument Serif', serif;
+            font-weight: 400;
+            font-style: italic;
+            margin-bottom: 5px;
+            color: var(--text-color);
+            font-size: 2rem;
+        }
+
+        /* Container */
+        .widget-container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Task Input */
+        .task-input {
+            width: 100%;
+            border: none;
+            border-bottom: 2px solid var(--gray-color);
+            padding: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1.1rem;
+            text-align: center;
+            color: var(--text-color);
+            background: transparent;
+            margin-bottom: 25px;
+            transition: border-color 0.3s;
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: var(--amber-color);
+        }
+
+        .task-input::placeholder {
+            color: #9CA3AF;
+            font-style: italic;
+        }
+
+        /* Timer Display */
+        .timer-display {
+            font-size: 4.5rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -2px;
+            color: var(--text-color);
+            margin: 5px 0 20px 0;
+            line-height: 1;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--amber-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
+            flex: 1;
+            max-width: 120px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(217, 119, 6, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--gray-color);
+            color: #4B5563;
+        }
+
+        .btn-secondary:hover {
+            background-color: #D1D5DB;
+        }
+
+        /* Modes */
+        .modes {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            background: transparent;
+            color: #9CA3AF;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+        }
+
+        .mode-btn.active {
+            background-color: rgba(217, 119, 6, 0.1);
+            color: var(--amber-color);
+            font-weight: 500;
+        }
+
+        /* FlowTunes Embed Section */
+        .embed-toggle {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--amber-color);
+            cursor: pointer;
+            text-decoration: underline;
+            background: none;
+            border: none;
+            padding: 5px;
+        }
+
+        .embed-container {
+            width: 100%;
+            height: 0;
+            overflow: hidden;
+            transition: height 0.3s ease;
+            margin-top: 10px;
+            border-radius: 12px;
+        }
+
+        .embed-container.open {
+            height: 180px;
+            /* Adjust based on player size */
+            border: 1px solid var(--gray-color);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* State Classes */
+        body.break-mode {
+            --amber-color: var(--sage-color);
+            /* Green for breaks */
+        }
+
+        body.break-mode .btn-primary {
+            box-shadow: 0 4px 10px rgba(5, 150, 105, 0.2);
+        }
+
+        body.break-mode .mode-btn.active {
+            background-color: rgba(5, 150, 105, 0.1);
+            color: var(--sage-color);
+        }
+
+        body.break-mode .task-input:focus {
+            border-color: var(--sage-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="widget-container">
+        <h1>Study Focus</h1>
+        <input type="text" class="task-input" placeholder="Was ist dein Fokus?" id="taskInput">
+
+        <div class="modes">
+            <button class="mode-btn active" onclick="setMode('focus')">Focus</button>
+            <button class="mode-btn" onclick="setMode('short')">Short Break</button>
+            <button class="mode-btn" onclick="setMode('long')">Long Break</button>
+        </div>
+
+        <div class="timer-display" id="timer">25:00</div>
+
+        <div class="controls">
+            <button class="btn-primary" id="startBtn" onclick="toggleTimer()">Starten</button>
+            <button class="btn-secondary" onclick="resetTimer()">↺</button>
+        </div>
+
+        <!-- FlowTunes / Music Embed -->
+        <button class="embed-toggle" onclick="toggleMusic()">🎵 Music Player öffnen</button>
+        <div class="embed-container" id="musicContainer">
+            <!-- 
+                1. Hier die URL ändern, falls du FlowTunes direkt hast.
+                2. Aktueller Fallback: Lofi Girl Generator oder YouTube Playlist
+            -->
+            <iframe id="musicFrame" src="https://www.youtube.com/embed/jfKfPfyJRdk?si=StartRadio" title="Lofi Music"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+
+    <script>
+        let timeLeft = 25 * 60;
+        let timerId = null;
+        let isRunning = false;
+        let currentMode = 'focus';
+
+        const modes = {
+            focus: 25 * 60,
+            short: 5 * 60,
+            long: 15 * 60
+        };
+
+        const timerDisplay = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        const body = document.body;
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        const musicContainer = document.getElementById('musicContainer');
+        const musicFrame = document.getElementById('musicFrame');
+
+        // FlowTunes URL (Falls du die spezifische URL hast, hier eintragen!)
+        // Wenn FlowTunes eine Webseite ist die Embeds erlaubt:
+        // const FLOWTUNES_URL = "https://flowtunes.net/player"; 
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.title = `${timerDisplay.textContent} - Focus`;
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                clearInterval(timerId);
+                startBtn.textContent = 'Weiter';
+                isRunning = false;
+            } else {
+                timerId = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerId);
+                        isRunning = false;
+                        startBtn.textContent = 'Starten';
+                        new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play();
+                        alert('Zeit abgelaufen!');
+                    }
+                }, 1000);
+                startBtn.textContent = 'Pause';
+                isRunning = true;
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            isRunning = false;
+            timeLeft = modes[currentMode];
+            startBtn.textContent = 'Starten';
+            updateDisplay();
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            timeLeft = modes[mode];
+            resetTimer();
+
+            modeBtns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (mode === 'short' || mode === 'long') {
+                body.classList.add('break-mode');
+            } else {
+                body.classList.remove('break-mode');
+            }
+        }
+
+        function toggleMusic() {
+            musicContainer.classList.toggle('open');
+            const btn = document.querySelector('.embed-toggle');
+            if (musicContainer.classList.contains('open')) {
+                btn.textContent = '🎵 Music Player schließen';
+            } else {
+                btn.textContent = '🎵 Music Player öffnen';
+            }
+        }
+
+        // Init
+        updateDisplay();
+    </script>
+</body>
+
+</html>
